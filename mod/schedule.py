@@ -1,6 +1,7 @@
 
 import time
 import datetime
+import itertools
 from mod.util import audio
 
 class Schedule(object):
@@ -31,20 +32,57 @@ class Schedule(object):
     days[6] = "U"
 
 
-    def __init__(self, call_list, campaign_config):
+    def __init__(self, call_count, campaign_config):
         self.job_start = datetime.datetime.today()
         self.days_to_call = list(campaign_config["days_to_call"])
         self.vm_length = audio.wav_duration(campaign_config["vm_file"])
-        self.timeslots = []
         self.sched_start = self.make_time(campaign_config["sched_start"])
         self.sched_stop = self.make_time(campaign_config["sched_stop"])
         self.estimated_calltime = self.estimate_calltime()
-        self.first_call = self.get_first_calltime(self.job_start)
-        for call in call_list:
+        self.first_calltime = self.get_first_calltime()
+        self.current_calltime = self.first_calltime
+        self.cps = campaign_config["cps"]
+        self.maxconcurrent = campaign_config["maxconcurrent"]
+        self.cps_counter = self.reset_counter(self.cps)
+        self.concurrent_counter = self.reset_counter(self.maxconcurrent)
+        self.call_count = call_count
+        self.call_counter = self.reset_counter(self.call_count)
+        timeslots = []
+        try:
+            while True:
+                try:
+                    next(self.cps_counter)
+                except StopIteration:
+                    self.current_calltime = get_next_calltime(1)
+                    self.cps_counter = self.reset_counter(self.cps)
 
-            datetime.datetime.today().strftime('%s')
 
-    def next_day(self, date_time):
+                try:
+                    next(self.concurrent_counter)
+                except StopIteration:
+                    self.current_calltime = self.get_next_calltime(self.current_calltime)
+                    self.concurrent_counter = self.reset_counter(self.cps)
+
+
+                timeslots.append(self.current_calltime)
+        except StopIteration:
+            pass
+        finally:
+            self.call_counter = self.reset_counter(self.call_count)
+            self.timeslots = iter(timeslots)
+
+    def next_timeslot_epoch(self):
+        """ return the next timeslot as UNIX Epoch """
+        try:
+            return self.get_epoch(next(self.timeslot))
+        except StopIteration:
+            return None
+
+    def reset_counter(self, count):
+        """ Return new counter based on count. """
+        return itertools.islice(itertools.count(1, 1), count)
+
+    def get_next_day(self, date_time):
         """ Pull the next day. """
         n = 1
         while not self.match_dow(date_time+datetime.timedelta(days=n)):
@@ -86,25 +124,39 @@ class Schedule(object):
         """ Estimate expected length of call to determine interval between timeslots. """
         return call_setup + self.vm_length
 
-    def get_buffer(self, date_time, buffer=300):
+    def get_buffer(self, date_time, buff=300):
         """ Round specified time and
         return with buffered start time to allow for processing."""
         round_time = date_time.replace(second=0, microsecond=0)
-        buffed_time = round_time + datetime.datetime.timedelta(seconds=buffer)
+        buffed_time = round_time + datetime.timedelta(seconds=buff)
         return buffed_time
 
-    def get_first_calltime(self, date_time):
+    def get_first_calltime(self):
         """ Return first available calltime per schedule. """
-        buffed_time = self.get_buffer(date_time)
+        buffed_time = self.get_buffer(self.job_start)
         if not self.match_dow(buffed_time):
-            return self.next_day(buffed_time)
+            return self.get_next_day(buffed_time)
 
-        if buffed_time < self.sched_start:
-            return datetime.datetime.combine(date_time+datetime.timedelta(days=n), self.sched_start)
+        if buffed_time.time() < self.sched_start:
+            return datetime.datetime.combine(buffed_time, self.sched_start)
 
-        if buffed_time > self.sched_stop:
-            return self.next_day(buffed_time)
+        if buffed_time.time() >= self.sched_stop:
+            return self.get_next_day(buffed_time)
 
         return buffed_time
 
+    def get_next_calltime(self, date_time, interval=None):
+        """ Return next timeslot based on current_calltime and estimated_calltime (interval). """
+        if interval is None:
+            interval = self.estimated_calltime
+        next_calltime = date_time + datetime.timedelta(seconds=interval)
+        if not self.match_dow(next_calltime):
+            return self.get_next_day(next_calltime)
 
+        if next_calltime.time() < self.sched_start:
+            return datetime.datetime.combine(next_calltime, self.sched_start)
+
+        if next_calltime.time() >= self.sched_stop:
+            return self.get_next_day(next_calltime)
+
+        return next_calltime
