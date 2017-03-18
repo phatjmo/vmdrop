@@ -1,9 +1,10 @@
 
 import time
-import timestamp
+import datetime
+from mod.util import audio
 
 class Schedule(object):
-    """ 
+    """
     Schedule object for the campaign run.
 
     Days of the Week: MTWRF
@@ -11,33 +12,69 @@ class Schedule(object):
 
     """
 
-    day_indexes = {}
-    day_indexes["M"] = 0
-    day_indexes["T"] = 1
-    day_indexes["W"] = 2
-    day_indexes["R"] = 3
-    day_indexes["F"] = 4
-    day_indexes["S"] = 5
-    day_indexes["U"] = 6
+    # day_indexes = {}
+    # day_indexes["M"] = 0
+    # day_indexes["T"] = 1
+    # day_indexes["W"] = 2
+    # day_indexes["R"] = 3
+    # day_indexes["F"] = 4
+    # day_indexes["S"] = 5
+    # day_indexes["U"] = 6
+
+    days = []
+    days[0] = "M"
+    days[1] = "T"
+    days[2] = "W"
+    days[3] = "R"
+    days[4] = "F"
+    days[5] = "S"
+    days[6] = "U"
+
 
     def __init__(self, call_list, campaign_config):
+        self.job_start = datetime.datetime.today()
+        self.days_to_call = list(campaign_config["days_to_call"])
+        self.wav_duration = audio.wav_duration(campaign_config["vm_file"])
+        self.timeslots = []
+        self.sched_start = self.make_time(campaign_config["sched_start"])
+        self.sched_stop = self.make_time(campaign_config["sched_stop"])
         for call in call_list:
-            self.job_start = datetime.datetime.today()
-            days_to_call = list(campaign_config["days_to_call"])
-            
-            datetime.datetime.today().strftime('%')
-    
-    def next_day():
+
+            datetime.datetime.today().strftime('%s')
+
+    def next_day(self, date_time):
         """ Pull the next day. """
+        n = 1
+        while not self.match_dow(date_time+datetime.timedelta(days=n)):
+            n += 1
 
-    def match_dow(self, days_to_call, date_time):
+        return datetime.datetime.combine(date_time+datetime.timedelta(days=n), self.sched_start)
+
+    def match_dow(self, date_time):
         """ Is the date on the schedule? """
-        for day in list(days_to_call):
-            if date_time.weekday() == day_indexes[day]:
-                return True
-            
-        return False
+        if self.days[date_time.weekday()] in list(self.days_to_call):
+            return True
+        else:
+            return False
 
-            
-            
+    def within_sched(self, the_time):
+        """
+        Is the provided time within the allowed schedule?
+
+        Using: datetime.time(9,0,0) <= datetime.datetime.now().time() <= datetime.time(23,0,0)
+
+        """
+        if self.sched_start <= the_time <= self.sched_stop:
+            return True
+        else:
+            return False
+
+    def make_time(self, time_string):
+        """ Convert 24HR HH:MM timestring to datetime.time object. """
+        time_pieces = time_string.split(":")
+        hour = int(time_pieces[0])
+        minute = int(time_pieces[1])
+        return datetime.time(hour, minute)
+
+
 

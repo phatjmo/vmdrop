@@ -90,11 +90,14 @@ def build_campaign(config_file):
     campaign_config['cps'] = raw_input('Enter the max Calls Per Second for this campaign: ')
     campaign_config['maxconcurrent'] = raw_input(
         'Enter the max Concurrent Calls for this campaign: ')
-    campaign_config['campaign_start'] = raw_input(
-        'Enter Start Date for this Campaign (MM-DD-YYY): ')
-    campaign_config['campaign_stop'] = raw_input('Enter Stop Date for this Campaign (MM-DD-YYY): ')
-    campaign_config['sched_start'] = raw_input('Enter Start Time for this Campaign (24HR HH:MM): ')
-    campaign_config['sched_stop'] = raw_input('Enter Start Time for this Campaign (24HR HH:MM): ')
+    campaign_config['days_to_call'] = raw_input(
+        "Enter Stop Date for this Campaign "
+        "(Mon = M, Tue = T, Wed = W, Thur = R, Fri = F, Sat = S, Sun = U): "
+        "[Default: MTWRF] ") or "MTWRF"
+    campaign_config['sched_start'] = raw_input(
+        'Enter Start Time for this Campaign (24HR - "HH:MM"): ')
+    campaign_config['sched_stop'] = raw_input(
+        'Enter Start Time for this Campaign (24HR - "HH:MM"): ')
     campaign_config['vm_file'] = raw_input(
         'Enter VM File for this Campaign (/full/path/to/file.wav): ')
     save(campaign_config, config_file)
