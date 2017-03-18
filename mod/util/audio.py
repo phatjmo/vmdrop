@@ -2,23 +2,25 @@
 import wave
 import audioop
 import contextlib
+import tempfile
+import shutil
 from os import path, makedirs
 
 def wav_duration(vm_file):
     """ Returns the length of the VM Wav file. """
 
-    if path.exists(vm_file):
+    if path.isfile(vm_file):
         with contextlib.closing(wave.open(vm_file, 'r')) as wav:
             frames = wav.getnframes()
             rate = wav.getframerate()
             duration = frames / float(rate)
-            return duration
+            return int(duration)
     else:
         return -1
 
-def check_format(vm_file, rate=8000, channels=1, bits=16):
+def check_format(vm_file, rate=11025, channels=1, bits=16):
     """ Check if the specified Wav recording is in an Asterisk Compatible format. """
-    if not path.exists(vm_file):
+    if not path.isfile(vm_file):
         return False
 
     wav_read = wave.open(vm_file, 'r')
@@ -31,12 +33,12 @@ def check_format(vm_file, rate=8000, channels=1, bits=16):
     else:
         return False
 
-def wav_convert(src, dst, out_rate=8000, out_channels=1, out_bits=16):
+def wav_convert(src, dst, out_rate=11025, out_channels=1, out_bits=16):
     """
     Convert Wav file to specified format.
     Defaults represent Asterisk requirements for PCM.
     """
-    if not path.exists(src):
+    if not path.isfile(src):
         print 'Source not found!'
         return False
 
@@ -84,3 +86,32 @@ def wav_convert(src, dst, out_rate=8000, out_channels=1, out_bits=16):
         return False
 
     return True
+
+def test_file(vm_file):
+    """ Make sure the vm_file for this campaign exists and is in the right format! """
+    allowed_types = ["wav","ulaw","alaw","g729","gsm"]
+    file_type = os.path.splitext(vm_file)[1][1:].lower()
+    if not path.isfile(vm_file):
+        return ("NO_FILE", "File: {0} does not exist!".format(vm_file))
+
+    if file_type == '' and not check_format(vm_file):
+        return ("BAD_FILE", "Invalid file type or format!")
+
+    if file_type not in allowed_types:
+        return ("WRONG_TYPE", "File type: {0} is not allowed.".format(file_type))
+
+    if file_type == "wav" and not check_format(vm_file):
+        tmp_file = tempfile.mkstemp()
+        if not wav_convert(vm_file, tmp_file):
+            return ("BAD_FORMAT", "File of type {0} is in an invalid format.".format(file_type))
+        else:
+            if check_format(tmp_file):
+                os.remove(vm_file)
+                shutil.move(tmp_file, vm_file)
+                return ("VERIFIED", "File was converted successfully!")
+            else:
+                os.remove(tmp_file)
+                return ("BAD_FORMAT", "File of type {0} is in an invalid format and could not be converted.".format(file_type))
+        
+    
+    return ("VERIFIED", "File of type {0} is in an acceptable format, no changes were necessary.".format(file_type))

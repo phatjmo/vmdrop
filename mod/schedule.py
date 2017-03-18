@@ -34,10 +34,12 @@ class Schedule(object):
     def __init__(self, call_list, campaign_config):
         self.job_start = datetime.datetime.today()
         self.days_to_call = list(campaign_config["days_to_call"])
-        self.wav_duration = audio.wav_duration(campaign_config["vm_file"])
+        self.vm_length = audio.wav_duration(campaign_config["vm_file"])
         self.timeslots = []
         self.sched_start = self.make_time(campaign_config["sched_start"])
         self.sched_stop = self.make_time(campaign_config["sched_stop"])
+        self.estimated_calltime = self.estimate_calltime()
+        self.first_call = self.get_first_calltime(self.job_start)
         for call in call_list:
 
             datetime.datetime.today().strftime('%s')
@@ -76,5 +78,33 @@ class Schedule(object):
         minute = int(time_pieces[1])
         return datetime.time(hour, minute)
 
+    def get_epoch(self, date_time):
+        """ Return UNIX Epoch for specified datetime (Only Unix). """
+        return int(date_time.strftime('%s'))
+
+    def estimate_calltime(self, call_setup=60):
+        """ Estimate expected length of call to determine interval between timeslots. """
+        return call_setup + self.vm_length
+
+    def get_buffer(self, date_time, buffer=300):
+        """ Round specified time and
+        return with buffered start time to allow for processing."""
+        round_time = date_time.replace(second=0, microsecond=0)
+        buffed_time = round_time + datetime.datetime.timedelta(seconds=buffer)
+        return buffed_time
+
+    def get_first_calltime(self, date_time):
+        """ Return first available calltime per schedule. """
+        buffed_time = self.get_buffer(date_time)
+        if not self.match_dow(buffed_time):
+            return self.next_day(buffed_time)
+
+        if buffed_time < self.sched_start:
+            return datetime.datetime.combine(date_time+datetime.timedelta(days=n), self.sched_start)
+
+        if buffed_time > self.sched_stop:
+            return self.next_day(buffed_time)
+
+        return buffed_time
 
 

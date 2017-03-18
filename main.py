@@ -10,6 +10,7 @@ from mod.dal import carriers
 from mod.util import asterisk
 from mod.util import phone
 from mod.util import logger
+from mod.util import audio
 from multiprocessing import Process
 from functools import partial
 
@@ -32,12 +33,16 @@ def arguments():
 
 def main():
     """ Primary Campaign Run Script """
-    
+    campaign, numberfile = arguments()
+    main_config = config.load_main()
+    campaign_config = config.load_campaign(campaign)
     calls = {}
     number = "4803326545"
     parsed_number = parse_phone(number)
     calls[parsed_number.e164] = Call(parsed_number)
-
+    if not test_file(campaign_config["vm_file"])[0] == "VERIFIED":
+        exit(1)
+    
     number_file, action, config_file = arguments()
     if not path.exists(numberFile) or stat(numberFile).st_size == 0:
         print """Specified file does not exist or is empty,
