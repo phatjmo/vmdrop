@@ -47,36 +47,40 @@ class Schedule(object):
         self.concurrent_counter = self.reset_counter(self.maxconcurrent)
         self.call_count = call_count
         self.call_counter = self.reset_counter(self.call_count)
-        timeslots = []
+        self.timeslots = iter([gen_timeslot()] for i in range(call_count)])
+
+
+    def gen_timeslot():
+        # try:
+        #     while True:
         try:
-            while True:
-                try:
-                    next(self.cps_counter)
-                except StopIteration:
-                    self.current_calltime = get_next_calltime(1)
-                    self.cps_counter = self.reset_counter(self.cps)
-
-
-                try:
-                    next(self.concurrent_counter)
-                except StopIteration:
-                    self.current_calltime = self.get_next_calltime(self.current_calltime)
-                    self.concurrent_counter = self.reset_counter(self.cps)
-
-
-                timeslots.append(self.current_calltime)
+            next(self.cps_counter)
         except StopIteration:
-            pass
-        finally:
-            self.call_counter = self.reset_counter(self.call_count)
-            self.timeslots = iter(timeslots)
+            self.current_calltime = get_next_calltime(1)
+            self.cps_counter = self.reset_counter(self.cps)
+
+
+        try:
+            next(self.concurrent_counter)
+        except StopIteration:
+            self.current_calltime = self.get_next_calltime(self.current_calltime)
+            self.concurrent_counter = self.reset_counter(self.cps)
+
+
+        #timeslots.append(self.current_calltime)
+        return self.current_calltime
+        # except StopIteration:
+        #     pass
+        # finally:
+        #     self.call_counter = self.reset_counter(self.call_count)
+        #     self.timeslots = iter(timeslots)
 
     def next_timeslot_epoch(self):
         """ return the next timeslot as UNIX Epoch """
         try:
-            return self.get_epoch(next(self.timeslot))
-        except StopIteration:
-            return None
+            return self.get_epoch(next(self.timeslots))
+        except StopIteration as stop:
+            raise stop
 
     def reset_counter(self, count):
         """ Return new counter based on count. """
@@ -160,3 +164,8 @@ class Schedule(object):
             return self.get_next_day(next_calltime)
 
         return next_calltime
+
+
+if __name__ == "__main__":
+    import doctest
+    doctest.testmod()

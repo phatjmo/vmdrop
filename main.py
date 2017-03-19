@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # coding=utf-8
+import argparse
 from sys import argv
 from os import path
 from mod import config
@@ -33,6 +34,16 @@ def arguments():
 
 def main():
     """ Primary Campaign Run Script """
+    parser = argparse.ArgumentParser()
+    # parser.add_argument('-c', '--channels', help="Number of channels to produce", default=2, type=int)
+    # parser.add_argument('-b', '--bits', help="Number of bits in each sample", choices=(16,), default=16, type=int)
+    # parser.add_argument('-r', '--rate', help="Sample rate in Hz", default=44100, type=int)
+    # parser.add_argument('-t', '--time', help="Duration of the wave in seconds.", default=60, type=int)
+    # parser.add_argument('-a', '--amplitude', help="Amplitude of the wave on a scale of 0.0-1.0.", default=0.5, type=float)
+    # parser.add_argument('-f', '--frequency', help="Frequency of the wave in Hz", default=440.0, type=float)
+    # parser.add_argument('filename', help="The file to generate.")
+    args = parser.parse_args()
+
     campaign, numberfile = arguments()
     main_config = config.load_main()
     campaign_config = config.load_campaign(campaign)
