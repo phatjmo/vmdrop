@@ -47,18 +47,18 @@ class Schedule(object):
         self.concurrent_counter = self.reset_counter(self.maxconcurrent)
         self.call_count = call_count
         self.call_counter = self.reset_counter(self.call_count)
-        self.timeslots = iter([gen_timeslot()] for i in range(call_count)])
+        self.timeslots = iter([self.gen_timeslot() for __call in range(call_count)])
 
 
-    def gen_timeslot():
-        # try:
-        #     while True:
+    def gen_timeslot(self):
+        """
+        Pull timeslot entry for Schedule
+        """
         try:
             next(self.cps_counter)
         except StopIteration:
-            self.current_calltime = get_next_calltime(1)
+            self.current_calltime = self.get_next_calltime(1)
             self.cps_counter = self.reset_counter(self.cps)
-
 
         try:
             next(self.concurrent_counter)
@@ -66,14 +66,7 @@ class Schedule(object):
             self.current_calltime = self.get_next_calltime(self.current_calltime)
             self.concurrent_counter = self.reset_counter(self.cps)
 
-
-        #timeslots.append(self.current_calltime)
         return self.current_calltime
-        # except StopIteration:
-        #     pass
-        # finally:
-        #     self.call_counter = self.reset_counter(self.call_count)
-        #     self.timeslots = iter(timeslots)
 
     def next_timeslot_epoch(self):
         """ return the next timeslot as UNIX Epoch """
