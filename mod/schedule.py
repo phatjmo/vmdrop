@@ -11,6 +11,21 @@ class Schedule(object):
     Days of the Week: MTWRF
     Time: 00:00 - 23:59
 
+    -- Doctest --
+    >>> import os
+    >>> import datetime
+    >>> from mod.util import audio
+    >>> campaign = {"days_to_call": "MTWRF", "sched_start": "09:00", "sched_start": "09:00", "sched_stop": "17:00", "cps": 2, "maxconcurrent": 5, "vm_file": audio.make_test_wav()}
+    >>> sched = Schedule(10, campaign, datetime.datetime(2017, 3, 17, 9, 0))
+    >>> [sched.next_timeslot_epoch() for __call in range(sched.call_count)]
+    [1489766700, 1489766700, 1489766701, 1489766701, 1489766701, 1489766792, 1489766792, 1489766792, 1489766883, 1489766883]
+    >>> sched.next_timeslot_epoch()
+    Traceback (most recent call last):
+        ...
+    StopIteration
+    >>> sched.gen_timeslot()
+    datetime.datetime(2017, 3, 17, 9, 8, 3)
+    >>> os.remove(campaign["vm_file"])
     """
 
     # day_indexes = {}
@@ -22,18 +37,10 @@ class Schedule(object):
     # day_indexes["S"] = 5
     # day_indexes["U"] = 6
 
-    days = []
-    days[0] = "M"
-    days[1] = "T"
-    days[2] = "W"
-    days[3] = "R"
-    days[4] = "F"
-    days[5] = "S"
-    days[6] = "U"
+    days = list("MTWRFSU")
 
-
-    def __init__(self, call_count, campaign_config):
-        self.job_start = datetime.datetime.today()
+    def __init__(self, call_count, campaign_config, job_start=datetime.datetime.today()):
+        self.job_start = job_start # datetime.datetime.today()
         self.days_to_call = list(campaign_config["days_to_call"])
         self.vm_length = audio.wav_duration(campaign_config["vm_file"])
         self.sched_start = self.make_time(campaign_config["sched_start"])
@@ -63,7 +70,7 @@ class Schedule(object):
         try:
             next(self.concurrent_counter)
         except StopIteration:
-            self.current_calltime = self.get_next_calltime(self.current_calltime)
+            self.current_calltime = self.get_next_calltime()
             self.concurrent_counter = self.reset_counter(self.cps)
 
         return self.current_calltime
@@ -142,11 +149,11 @@ class Schedule(object):
 
         return buffed_time
 
-    def get_next_calltime(self, date_time, interval=None):
+    def get_next_calltime(self, interval=None):
         """ Return next timeslot based on current_calltime and estimated_calltime (interval). """
         if interval is None:
             interval = self.estimated_calltime
-        next_calltime = date_time + datetime.timedelta(seconds=interval)
+        next_calltime = self.current_calltime + datetime.timedelta(seconds=interval)
         if not self.match_dow(next_calltime):
             return self.get_next_day(next_calltime)
 
