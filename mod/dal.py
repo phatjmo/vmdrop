@@ -1,27 +1,32 @@
 
-import sqlite3
 """
 Data Access Layer Module
 """
 
-def generate_carriers(carrier_file):
-    """
-    Build the carriers table from specified CSV file.
-    
-    -- Doctest --
+class DAL(object):
+    """ Core Data Access Layer Object """
 
-    """
-    import csv
+    def __init__(self, config):
+        self.db_path = config["db_path"]
+        self.db_type = config["db_type"]
+        self.db = __import__(self.db_type)
 
-    conn = sqlite3.connect("database/vmdrop.db") # :memory: is an interesting option
-    cur = con.cursor()
-    cur.execute("CREATE TABLE carriers (carrierName, accessNumber);")
+    def table_exists(self, table_name):
+        """
+        Check if table exists in DB.
 
-    with open(carrier_file,'rb') as file:
-        # csv.DictReader uses first line in file for column headings by default
-        line = csv.DictReader(file) # comma is default delimiter
-        to_db = [(row['carrierName'], row['accessNumber']) for row in line]
+        -- Doctest --
 
-    cur.executemany("INSERT INTO carriers (carrierName, accessNumber) VALUES (?, ?);", to_db)
-    conn.commit()
-    conn.close()
+        """
+
+        conn = self.db.connect(self.db_path) # :memory: is an interesting option
+        cur = conn.cursor()
+        cmd = "SELECT name FROM sqlite_master WHERE type='table' AND name='{0}';".format(table_name)
+        # If the carriers table already exists, drop and reload
+        if cur.execute(cmd) == 0:
+            return False
+        else:
+            return True
+        conn.close()
+
+        

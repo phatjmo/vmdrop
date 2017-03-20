@@ -1,6 +1,7 @@
 # Misc Shite
 .DS_Store
 .vscode/
+*.db
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
