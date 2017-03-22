@@ -8,12 +8,40 @@ class Carriers(mod.dal.DAL):
     -- Doctest --
     """
 
+    def __test_csv(self):
+        """
+        Generate test CSV carrier file for other carrier testing.
 
+        -- Doctest --
+
+        """
+
+        import csv
+        import tempfile
+        test_csv = tempfile.mkstemp(suffix='.csv')[1]
+
+        with open(test_csv, 'w') as csvfile:
+            fieldnames = ['carrierName', 'accessNumber']
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+
+            writer.writeheader()
+            writer.writerow({'carrierName': 'T-Mobile', 'accessNumber': '+18056377243'})
+            writer.writerow({'carrierName': 'Verizon', 'accessNumber': '+18056377243'})
+            writer.writerow({'carrierName': 'Sprint', 'accessNumber': '+18056377243'})
+        return test_csv
+    
     def load_carriers(self, carrier_file):
         """
         Build the carriers table from specified CSV file.
 
         -- Doctest --
+
+        >>>import os
+        >>>carriers = Carriers({"db_path": ':memory:', "db_type": 'sqlite3'})
+        >>>test_csv = __test_csv()
+        >>>carriers.load_carriers(test_csv)
+        True
+        >>>os.remove(test_csv)
 
         """
         import csv
@@ -35,6 +63,15 @@ class Carriers(mod.dal.DAL):
         Get the best access number for the specified carrier and mobile number.
 
         -- Doctest --
+
+        >>>import os
+        >>>carriers = Carriers({"db_path": ':memory:', "db_type": 'sqlite3'})
+        >>>test_csv = __test_csv()
+        >>>carriers.load_carriers(test_csv)
+        True
+        >>>carriers.get_access_number('T-Mobile', '4805551212')
+        '+18056377243'
+        >>>os.remove(test_csv)
         """
         area_code = number[:3]
         cmd = """SELECT accessNumber

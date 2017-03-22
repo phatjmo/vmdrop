@@ -57,9 +57,24 @@ class DAL(object):
         conn.close()
         return True
 
+    def get_none(self, cmd, params):
+        """
+        Execute cmd and expect no return rows.
+        Used for custom updates, inserts or other commands.
+
+        -- Doctest --
+
+        """
+        conn = self.get_conn()
+        cur = conn.cursor()
+        cur.execute(cmd, params)
+        conn.commit()
+        conn.close()
+        return True
+
     def get_first(self, cmd, params):
         """
-        Execute cmd and return all results.
+        Execute cmd and return first result.
 
         -- Doctest --
 
@@ -115,6 +130,30 @@ class DAL(object):
         conn.close()
         return True
 
+    def update_rows(self, table_name, set_dict, where_dict):
+        """
+        Update specified table with set_dict for where_dict.
+        Assumes strict AND list. Custom updates should use get_none()
+        -- Doctest --
+
+        """
+        conn = self.get_conn()
+        cur = conn.cursor()
+        set_str = ""
+        for key, value in set_dict.items():
+            set_str = "{0} {1}={2},".format(set_str, key, self.encapsulate(value))
+        set_str = set_str[:-1]
+
+        for key, value in where_dict.items():
+                where_str = "{0} {1}={2} AND".format(where_str, key, self.encapsulate(value))
+        where_str = where_str[:-4]
+
+        cmd = "UPDATE {0} SET {1} WHERE {2}".format(table_name, set_str, where_str)
+        cur.execute(cmd)       
+        conn.commit()
+        conn.close()
+        return True
+
     def create_table(self, table_name, fields):
         """
         Create table with fields.
@@ -132,6 +171,17 @@ class DAL(object):
         cur.execute(cmd)
         conn.close()
         return True
+
+    def encapsulate(self,var):
+        """
+        Quick and dirty number check and encapsulation return.
+        """
+        try:
+            complex(var) # for int, long, float and complex
+        except ValueError:
+            return "'{0}'".format(var)
+
+        return return "{0}".format(var)
 
 
 
