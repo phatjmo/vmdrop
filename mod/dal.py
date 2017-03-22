@@ -11,6 +11,17 @@ class DAL(object):
         self.db_type = config["db_type"]
         self.db_mod = __import__(self.db_type)
 
+    def get_conn(self):
+        """
+        Build connection and return.
+
+        -- Doctest --
+        """
+
+        conn = self.db_mod.connect(self.db_path) # :memory: is an interesting option
+        conn.row_factory = self.db_mod.Row
+        return conn
+
     def table_exists(self, table_name):
         """
         Check if table exists in DB.
@@ -19,7 +30,7 @@ class DAL(object):
 
         """
 
-        conn = self.db_mod.connect(self.db_path) # :memory: is an interesting option
+        conn = self.get_conn()
         cur = conn.cursor()
         cmd = "SELECT name FROM sqlite_master WHERE type='table' AND name='{0}';".format(table_name)
         # If the carriers table already exists, drop and reload
@@ -37,13 +48,14 @@ class DAL(object):
 
         """
 
-        conn = self.db_mod.connect(self.db_path) # :memory: is an interesting option
+        conn = self.get_conn()
         cur = conn.cursor()
         cmd = "DROP TABLE IF EXISTS '{0}';".format(table_name)
         # If the carriers table already exists, drop and reload
         cur.execute(cmd)
         conn.commit()
         conn.close()
+        return True
 
     def get_first(self, cmd, params):
         """
@@ -52,12 +64,12 @@ class DAL(object):
         -- Doctest --
 
         """
-        conn = self.db_mod.connect(self.db_path) # :memory: is an interesting option
+        conn = self.get_conn()
         cur = conn.cursor()
         cur.execute(cmd, params)
         result = cur.fetchone()
         conn.close()
-        return results
+        return result
 
     def get_all(self, cmd, params):
         """
@@ -66,14 +78,14 @@ class DAL(object):
         -- Doctest --
 
         """
-        conn = self.db_mod.connect(self.db_path) # :memory: is an interesting option
+        conn = self.get_conn()
         cur = conn.cursor()
         cur.execute(cmd, params)
         results = cur.fetchall()
         conn.close()
         return results
 
-    def insert_rows(self, cmd, values):
+    def insert_rows(self, table_name, row_dict):
         """
         Execute cmd and return all results.
 
@@ -81,13 +93,23 @@ class DAL(object):
 
         """
 
-        conn = self.db_mod.connect(self.db_path) # :memory: is an interesting option
+        conn = self.get_conn()
         cur = conn.cursor()
 
-        if isinstance(values, list):
-            cur.executemany(cmd, values)
+        field_str = "("
+        value_str = "("
+        for field in row_dict.keys():
+            field_str = field_str + field + ", "
+            value_str = value_str + ":" + field + ", "
+        field_str = field_str[:-2] + ")"
+        value_str = value_str[:-2] + ")"
+
+        cmd = "INSERT INTO {0} {1} VALUES {2}".format(table_name, field_str, value_str)
+
+        if isinstance(row_dict, list):
+            cur.executemany(cmd, row_dict)
         else:
-            cur.execute(cmd, values)
+            cur.execute(cmd, row_dict)
 
         conn.commit()
         conn.close()
@@ -100,7 +122,7 @@ class DAL(object):
         --- Doctest --
         """
 
-        conn = self.db_mod.connect(self.db_path) # :memory: is an interesting option
+        conn = self.get_conn()
         cur = conn.cursor()
         field_str = "("
         for field in fields:
@@ -109,6 +131,7 @@ class DAL(object):
         cmd = "CREATE TABLE IF NOT EXISTS {0} {1};".format(table_name, field_str)
         cur.execute(cmd)
         conn.close()
+        return True
 
 
 
