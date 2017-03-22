@@ -7,6 +7,12 @@ class Carriers(mod.dal.DAL):
 
     -- Doctest --
     """
+    def __init__(self, *args, **kwargs):
+        """
+        Init new Carriers object
+        """
+        super(self.__class__, self).__init__(*args, **kwargs)
+        
 
     def __test_csv(self):
         """

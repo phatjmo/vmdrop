@@ -5,6 +5,16 @@ class Dialstatus(mod.dal.DAL):
     Data Access for dialstatus table
     """
 
+    def __init__(self, config, *args, **kwargs):
+        """
+        Init new Dialstatus object
+        """
+        super(self.__class__, self).__init__(config, *args, **kwargs)
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+        
+        
+
     def dialstatus_dict(self, call):
         """
         Return a dict with the basic dialstatus fields
@@ -27,7 +37,7 @@ class Dialstatus(mod.dal.DAL):
         -- Doctest --
         """
 
-    def new_dialstatus(self, dialstatus):
+    def new_dialstatus(self, call):
         """
         Create new dialstatus record.
 
@@ -35,7 +45,7 @@ class Dialstatus(mod.dal.DAL):
         """
         if not self.table_exists('dialstatus'):
             self.create_table('dialstatus',
-                              ('campaign',
+                              ['campaign',
                                'vmNumber',
                                'accessNumber',
                                'listFile',
@@ -48,8 +58,12 @@ class Dialstatus(mod.dal.DAL):
                                'dialStatus',
                                'numberType',
                                'error',
-                               'errorText'))
-        self.insert_rows('dialstatus', dialstatus)
+                               'errorText'])
+        dialstatus = {"vmNumber": call["vmNumber"],
+        
+        if self.get_dialsta
+        self.insert_rows('dialstatus', call)
+
         return True
 
 
@@ -60,13 +74,38 @@ class Dialstatus(mod.dal.DAL):
         -- Doctest --
         """
 
+        where_dict = {"vmNumber": dialstatus.pop("vmNumber"),
+                      "campaign": dialstatus.pop("campaign"),
+                      "listFile": dialstatus.pop("listFile")}
+        self.update_rows("dialstatus", dialstatus, where_dict)
+        return True
 
-    def get_dialstatus(self, dialstatus):
+
+
+    def get_dialstatus(self, callc):
         """
         Get dialstatus record.
 
         -- Doctest --
         """
+        if "vmNumber" and "campaign" and "listFile" not in call:
+            return None 
+        new_dict = {}
+        where_dict = {"vmNumber": call["vmNumber"],
+                      "campaign": call["campaign"],
+                      "listFile": call["listFile"]}
+        cmd = """SELECT * FROM dialstatus 
+                 WHERE vmNumber=:vmNumber AND
+                 campaign=:campaign AND
+                 listFile=:listFile"""
+        result = self.get_first(cmd, call)
+        if result is None:
+            self.new_dialstatus(dialstatus_dict(call))
+            new_dict = dialstatus
+        else:
+            for col, value in result.items:
+                new_dict[col] = value
+        return new_dict
 
 
     def get_summary(self, campaign, list):

@@ -6,7 +6,7 @@ Data Access Layer Module
 class DAL(object):
     """ Core Data Access Layer Object """
 
-    def __init__(self, config):
+    def __init__(self, config, *args, **kwargs):
         self.db_path = config["db_path"]
         self.db_type = config["db_type"]
         self.db_mod = __import__(self.db_type)
@@ -172,7 +172,7 @@ class DAL(object):
         conn.close()
         return True
 
-    def encapsulate(self,var):
+    def encapsulate(self, var):
         """
         Quick and dirty number check and encapsulation return.
         """
@@ -181,7 +181,7 @@ class DAL(object):
         except ValueError:
             return "'{0}'".format(var)
 
-        return return "{0}".format(var)
+        return "{0}".format(var)
 
 
 
