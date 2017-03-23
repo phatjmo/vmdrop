@@ -6,7 +6,7 @@ Data Access Layer Module
 class DAL(object):
     """ Core Data Access Layer Object """
 
-    def __init__(self, config, *args, **kwargs):
+    def __init__(self, **config):
         self.db_path = config["db_path"]
         self.db_type = config["db_type"]
         self.db_mod = __import__(self.db_type)

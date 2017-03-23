@@ -5,13 +5,17 @@ class Dialstatus(mod.dal.DAL):
     Data Access for dialstatus table
     """
 
-    def __init__(self, config, *args, **kwargs):
+    def __init__(self, config, **kwargs):
         """
         Init new Dialstatus object
         """
-        super(self.__class__, self).__init__(config, *args, **kwargs)
-        for key, value in kwargs.items():
-            setattr(self, key, value)
+        super(self.__class__, self).__init__(config, **kwargs)
+        
+        if "dialID" in kwargs:
+            self.__dict__ = self.get_dialstatus(dialID = kwargs["dialID"])
+        else
+        # for key, value in kwargs.items():
+        #     setattr(self, key, value)
         
         
 
@@ -45,7 +49,8 @@ class Dialstatus(mod.dal.DAL):
         """
         if not self.table_exists('dialstatus'):
             self.create_table('dialstatus',
-                              ['campaign',
+                              ['dialId integer primary key'
+                               'campaign',
                                'vmNumber',
                                'accessNumber',
                                'listFile',
@@ -61,9 +66,8 @@ class Dialstatus(mod.dal.DAL):
                                'errorText'])
         dialstatus = {"vmNumber": call["vmNumber"],
         
-        if self.get_dialsta
-        self.insert_rows('dialstatus', call)
-
+        
+        self.insert_rows('dialstatus', self.__dict__)
         return True
 
 
@@ -82,7 +86,7 @@ class Dialstatus(mod.dal.DAL):
 
 
 
-    def get_dialstatus(self, callc):
+    def get_dialstatus(self, call):
         """
         Get dialstatus record.
 
