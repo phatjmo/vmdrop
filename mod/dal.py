@@ -72,7 +72,7 @@ class DAL(object):
         conn.close()
         return True
 
-    def get_first(self, cmd, params):
+    def get_first(self, cmd, **params):
         """
         Execute cmd and return first result.
 
@@ -86,7 +86,7 @@ class DAL(object):
         conn.close()
         return result
 
-    def get_all(self, cmd, params):
+    def get_all(self, cmd, **params):
         """
         Execute cmd and return all results.
 
@@ -98,7 +98,7 @@ class DAL(object):
         cur.execute(cmd, params)
         results = cur.fetchall()
         conn.close()
-        return results
+        return [dict(x) for x in results]
 
     def insert_rows(self, table_name, row_dict):
         """
