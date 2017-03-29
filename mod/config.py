@@ -85,7 +85,7 @@ def build_main(config_file):
 def build_campaign(config_file):
     """Build the configuration file for this campaign."""
     campaign_config = {}
-    campaign_config['code'] = raw_input('Enter your Campaign Name: ')
+    campaign_config['campaign_code'] = raw_input('Enter your Campaign Name: ')
     campaign_config['ani'] = raw_input('Enter your Campaign Call ANI: ')
     campaign_config['cps'] = raw_input('Enter the max Calls Per Second for this campaign: ')
     campaign_config['maxconcurrent'] = raw_input(

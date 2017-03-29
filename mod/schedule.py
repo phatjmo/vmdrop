@@ -39,17 +39,17 @@ class Schedule(object):
 
     days = list("MTWRFSU")
 
-    def __init__(self, call_count, campaign_config, job_start=datetime.datetime.today()):
+    def __init__(self, call_count, config, job_start=datetime.datetime.today()):
         self.job_start = job_start # datetime.datetime.today()
-        self.days_to_call = list(campaign_config["days_to_call"])
-        self.vm_length = audio.wav_duration(campaign_config["vm_file"])
-        self.sched_start = self.make_time(campaign_config["sched_start"])
-        self.sched_stop = self.make_time(campaign_config["sched_stop"])
+        self.days_to_call = list(config["days_to_call"])
+        self.vm_length = audio.wav_duration(config["vm_file"])
+        self.sched_start = self.make_time(config["sched_start"])
+        self.sched_stop = self.make_time(config["sched_stop"])
         self.estimated_calltime = self.estimate_calltime()
         self.first_calltime = self.get_first_calltime()
         self.current_calltime = self.first_calltime
-        self.cps = campaign_config["cps"]
-        self.maxconcurrent = campaign_config["maxconcurrent"]
+        self.cps = config["cps"]
+        self.maxconcurrent = config["maxconcurrent"]
         self.cps_counter = self.reset_counter(self.cps)
         self.concurrent_counter = self.reset_counter(self.maxconcurrent)
         self.call_count = call_count

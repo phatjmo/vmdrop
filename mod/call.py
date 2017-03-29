@@ -11,9 +11,9 @@ class Call(object): # pylint: disable=too-few-public-methods
     
     -- Doctest --
     """
-    def __init__(self, parsed_number, main_config, campaign_config):
+    def __init__(self, parsed_number, config):
         self.vm_number = parsed_number
-        carriers = dal.Carriers(main_config)
+        carriers = dal.Carriers(config)
         self.access_number = carriers.get_access_number(parsed_number)
 
     
