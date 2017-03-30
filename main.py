@@ -27,13 +27,25 @@ __author__ = 'Justin Zimmer'
 def arguments():
     """ Primary Campaign Run Script """
     parser = argparse.ArgumentParser()
-    # parser.add_argument('-c', '--channels', help="Number of channels to produce", default=2, type=int)
-    # parser.add_argument('-b', '--bits', help="Number of bits in each sample", choices=(16,), default=16, type=int)
-    # parser.add_argument('-r', '--rate', help="Sample rate in Hz", default=44100, type=int)
-    # parser.add_argument('-t', '--time', help="Duration of the wave in seconds.", default=60, type=int)
-    # parser.add_argument('-a', '--amplitude', help="Amplitude of the wave on a scale of 0.0-1.0.", default=0.5, type=float)
-    # parser.add_argument('-f', '--frequency', help="Frequency of the wave in Hz", default=440.0, type=float)
-    # parser.add_argument('filename', help="The file to generate.")
+    parser.add_argument('campaign_code',
+                        help="Shortcode for this call campaign", type=str)
+    parser.add_argument('list_file',
+                        help="The list file to call.", type=str)
+    parser.add_argument('-c',
+                        '--cps',
+                        help="Max calls in one second", type=int)
+    parser.add_argument('-m',
+                        '--maxconcurrent',
+                        help="Max calls at one time (max channels)", type=int)
+    parser.add_argument('-v',
+                        '--vm_file',
+                        help="Full path to voicemail file to play.", type=str)
+    parser.add_argument('-d',
+                        '--days_to_call',
+                        help="Days of the week for this list to call.", type=str)
+    parser.add_argument('-t',
+                        '--sched_start',
+                        help="Time of day for calling to start", type=str)
     return parser.parse_args()
 
 def main():
@@ -41,14 +53,14 @@ def main():
     Main Process
     """
 
-    campaign, list_file = arguments()
-    cfg = config.load_main()
-    cfg.update(config.load_campaign(campaign))
+    args = arguments()
+    cfg = config.load_main(**args)
+    cfg.update(config.load_campaign(**args))
     calls = {}
     if audio.test_file(cfg["vm_file"])[0] != "VERIFIED":
         exit(1)
 
-    list_file = arguments()["listfile"]
+    list_file = arguments()["list_file"]
     if not path.exists(list_file) or stat(list_file).st_size == 0:
         print """Specified file does not exist or is empty,
 please check filename and try again!"""
@@ -66,7 +78,7 @@ please check filename and try again!"""
                 config,
                 list_file=list_file,
                 vm_number=parsed_number.e164,
-                campaign=cfg["campaign_code"],
+                campaign_code=cfg["campaign_code"],
                 access_number=calls[parsed_number.e164].access_number,
                 vm_file=cfg["vm_file"],
                 dial_status='Spooling...',

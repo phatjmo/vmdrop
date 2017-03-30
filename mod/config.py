@@ -30,10 +30,16 @@ def load_main():
         exit(1)
 
 
-def load_campaign(campaign):
+def load_campaign(**config):
     """Load the specific config for this campaign."""
 
-    config_file = "config_{0}.json".format(campaign)
+    if campaign_code not in config:
+        config["campaign_code"] raw_input(
+        'You did not specify a campaign for this run! Please enter a campaign code: ')
+        if config["campaign_code"] == '':
+            "I can't run this list without a campaign code!"
+            exit(1)
+    config_file = "config_{0}.json".format(config["campaign_code"])
     if path.exists(config_file):
         campaign_config = load(config_file)
     else:
@@ -45,6 +51,7 @@ def load_campaign(campaign):
     else:
         print "Oh well, I tried..."
         exit(1)
+    save(campaign_config, config_file)
     return campaign_config
 
 
@@ -69,7 +76,7 @@ def build_main(config_file):
         'Enter the path to your database: [Enter for Default: database/]') or "database/"
     main_config['db_type'] = raw_input(
         'Enter the type of database you are using: [Enter for Default: sqlite3]') or "sqlite3"
-    main_config['default_ani'] = raw_input('Enter your Default Call ANI: ')
+    main_config['ani'] = raw_input('Enter your Default Call ANI: ')
     main_config['twilio_sid'] = raw_input('Enter your Twilio AccountSID for this campaign: ')
     main_config['twilio_token'] = raw_input('Enter your Twilio AuthToken for this campaign: ')
     main_config['ast_spool'] = raw_input(
@@ -82,23 +89,22 @@ def build_main(config_file):
     return main_config
 
 
-def build_campaign(config_file):
+def build_campaign(**config):
     """Build the configuration file for this campaign."""
     campaign_config = {}
-    campaign_config['campaign_code'] = raw_input('Enter your Campaign Name: ')
-    campaign_config['ani'] = raw_input('Enter your Campaign Call ANI: ')
-    campaign_config['cps'] = raw_input('Enter the max Calls Per Second for this campaign: ')
-    campaign_config['maxconcurrent'] = raw_input(
+    campaign_config['campaign_code'] = config['campaign_code'] if 'campaign_code' in config else raw_input('Enter your Campaign Name: ')
+    campaign_config['ani'] = config['ani'] if 'ani' in config else raw_input('Enter your Campaign Call ANI: ')
+    campaign_config['cps'] = config['cps'] if 'cps' in config else raw_input('Enter the max Calls Per Second for this campaign: ')
+    campaign_config['maxconcurrent'] = config['maxconcurrent'] if 'maxconcurrent' in config else raw_input(
         'Enter the max Concurrent Calls for this campaign: ')
-    campaign_config['days_to_call'] = raw_input(
+    campaign_config['days_to_call'] = config['days_to_call'] if 'days_to_call' in config else raw_input(
         "Enter Stop Date for this Campaign "
         "(Mon = M, Tue = T, Wed = W, Thur = R, Fri = F, Sat = S, Sun = U): "
         "[Default: MTWRF] ") or "MTWRF"
-    campaign_config['sched_start'] = raw_input(
+    campaign_config['sched_start'] = config['sched_start'] if 'sched_start' in config else raw_input(
         'Enter Start Time for this Campaign (24HR - "HH:MM"): ')
-    campaign_config['sched_stop'] = raw_input(
+    campaign_config['sched_stop'] = config['sched_stop'] if 'sched_stop' in config else raw_input(
         'Enter Start Time for this Campaign (24HR - "HH:MM"): ')
-    campaign_config['vm_file'] = raw_input(
+    campaign_config['vm_file'] = config['vm_file'] if 'vm_file' in config else raw_input(
         'Enter VM File for this Campaign (/full/path/to/file.wav): ')
-    save(campaign_config, config_file)
     return campaign_config
