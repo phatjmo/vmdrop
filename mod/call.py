@@ -14,8 +14,8 @@ class Call(object): # pylint: disable=too-few-public-methods
     def __init__(self, parsed_number, config):
         self.vm_number = parsed_number
         carriers = Carriers(config)
-        print carriers
         self.access_number = carriers.get_access_number(
             parsed_number.carrier,
             str(parsed_number.national_number))
+        print "Access Number: {0}".format(self.access_number)
 

@@ -11,7 +11,7 @@ from mod.schedule import Schedule
 from mod.dialstatus import Dialstatus
 #from mod.carriers import Carriers
 from mod.util import asterisk
-from mod.util import phone
+from mod.util.phone import Phone
 #from mod.util import logger
 from mod.util import audio
 #from multiprocessing import Process
@@ -79,20 +79,21 @@ please check filename and try again!"""
                 print "Line is empty... what gives? Skipping..."
                 continue
             print "Calling {0}".format(number)
-            pre_lookup = phone.parse_phone(number)
-            print pre_lookup
-            parsed_number = phone.lookup_number(pre_lookup, cfg)
-            print parsed_number
-            calls[parsed_number.e164] = Call(parsed_number, cfg)
-            calls[parsed_number.e164].dialstatus = Dialstatus(
+            phone_number = Phone(number, sid=cfg["twilio_sid"], token=cfg["twilio_token"])
+            print "E.164: {0}, Carrier: {1}, Type: {2}".format(
+                phone_number.e164,
+                phone_number.carrier,
+                phone_number.type)
+            calls[phone_number.e164] = Call(phone_number, cfg)
+            calls[phone_number.e164].dialstatus = Dialstatus(
                 config,
                 list_file=list_file,
-                vm_number=parsed_number.e164,
+                vm_number=phone_number.e164,
                 campaign_code=cfg["campaign_code"],
-                access_number=calls[parsed_number.e164].access_number,
+                access_number=calls[phone_number.e164].access_number,
                 vm_file=cfg["vm_file"],
                 dial_status='Spooling...',
-                number_type=parsed_number.type)
+                number_type=phone_number.type)
     call_count = sum(call.vm_number.type == "mobile" for call in calls)
     sched = Schedule(call_count, cfg)
     for call in calls:

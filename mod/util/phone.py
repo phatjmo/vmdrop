@@ -24,33 +24,37 @@ API returns:
 """
 __author__ = 'Justin Zimmer'
 
+class Phone(object):
+    """ Custom class for storing pertinent phone information. """
+    def __init__(self, phone_number, **kwargs):
+        parsed_phone = self.parse_phone(phone_number)
+        self.e164 = self.format_e164(parsed_phone)
+        self.national_number = parsed_phone.national_number
+        self.country_code = parsed_phone.country_code
+        self.lookup_number(kwargs["sid"], kwargs["token"])
 
-def parse_phone(number, region="US"):
-    """ Parse phone number into phone object """
-    parsed_number = phonenumbers.parse(number, region)
-    parsed_number.__dict__["e164"] = format_e164(parsed_number)
-    return parsed_number
-
-def format_e164(parsed_number):
-    """ Parse and return e.164 phone number string. """
-    return phonenumbers.format_number(parsed_number,
-                                      phonenumbers.PhoneNumberFormat.E164)
-
-def lookup_number(parsed_number, config):
-    """Lookup carrier information for the specified phone number."""
-
-    client = TwilioLookupsClient(config["twilio_sid"], config["twilio_token"])
-    try:
-        response = client.phone_numbers.get(parsed_number.e164, include_carrier_info=True)
-        parsed_number.__dict__["carrier"] = response.carrier["name"]
-        parsed_number.__dict__["type"] = response.carrier["type"]
+    def parse_phone(self, number, region="US"):
+        """ Parse phone number into phone object """
+        parsed_number = phonenumbers.parse(number, region)
         return parsed_number
-    except TwilioRestException as error:
-        if error.code == 20404:
-            parsed_number.__dict__["carrier"]
-            parsed_number.__dict__["type"]
-            return parsed_number
-        else:
-            parsed_number.carrier = error.message
-            parsed_number.type = error.code
-            return parsed_number
+
+    def format_e164(self, parsed_number):
+        """ Parse and return e.164 phone number string. """
+        return phonenumbers.format_number(parsed_number,
+                                          phonenumbers.PhoneNumberFormat.E164)
+
+    def lookup_number(self, sid, token):
+        """Lookup carrier information for the specified phone number."""
+
+        client = TwilioLookupsClient(sid, token)
+        try:
+            response = client.phone_numbers.get(self.e164, include_carrier_info=True)
+            self.carrier = response.carrier["name"]
+            self.type = response.carrier["type"]
+        except TwilioRestException as error:
+            if error.code == 20404:
+                self.carrier = 'None'
+                self.type = 'Invalid'
+            else:
+                self.carrier = error.message
+                self.type = error.code

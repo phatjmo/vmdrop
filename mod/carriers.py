@@ -14,7 +14,7 @@ class Carriers(mod.dal.DAL):
         """
         super(self.__class__, self).__init__(config, **kwargs)
         print self.table_exists('carriers')
-        if not self.table_exists('carriers'):
+        if not self.table_exists('carriers') or self.get_first("SELECT * FROM carriers") is None:
             print "Carriers table doesn't exist, loading file from config..."
             self.load_carriers(config["carrier_file"])
 
@@ -92,5 +92,5 @@ class Carriers(mod.dal.DAL):
                 AND carrierName=:carrier) 
                 OR carrierName=:carrier
             """
-        params = {"area_code": area_code, "carrierName": carrier}
+        params = {"area_code": area_code, "carrier": carrier}
         return self.get_first(cmd, **params)
