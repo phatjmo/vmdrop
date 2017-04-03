@@ -1,21 +1,21 @@
 #!/usr/bin/env python
 # coding=utf-8
 import argparse
-from sys import argv
+#from sys import argv
 from os import path
 from os import stat
 from mod import config
 from mod.call import Call
-from mod import state
+
 from mod.schedule import Schedule
-from mod.dal.dialstatus import Dialstatus
-from mod.dal.carriers import Carriers
+from mod.dialstatus import Dialstatus
+#from mod.carriers import Carriers
 from mod.util import asterisk
 from mod.util import phone
-from mod.util import logger
+#from mod.util import logger
 from mod.util import audio
-from multiprocessing import Process
-from functools import partial
+#from multiprocessing import Process
+#from functools import partial
 
 """
 Scan List of Numbers, lookup carrier, create Call File
@@ -46,6 +46,9 @@ def arguments():
     parser.add_argument('-t',
                         '--sched_start',
                         help="Time of day for calling to start", type=str)
+    parser.add_argument('-p',
+                        '--sched_stop',
+                        help="Time of day for calling to stop", type=str)
     return parser.parse_args()
 
 def main():
@@ -53,14 +56,18 @@ def main():
     Main Process
     """
 
-    args = arguments()
-    cfg = config.load_main(**args)
+    args = arguments().__dict__
+    cfg = config.load_main()
     cfg.update(config.load_campaign(**args))
     calls = {}
-    if audio.test_file(cfg["vm_file"])[0] != "VERIFIED":
-        exit(1)
+    test_audio = audio.test_file(cfg["vm_file"])[0]
+    if test_audio != "VERIFIED":
+        print "There is something wrong with the audio file: {0}".format(test_audio)
+        override_audio = raw_input("Do you want to run the file anyways? [Y/N]: ")
+        if override_audio.strip()[0:1].upper() != 'Y':
+            exit(1)
 
-    list_file = arguments()["list_file"]
+    list_file = args["list_file"]
     if not path.exists(list_file) or stat(list_file).st_size == 0:
         print """Specified file does not exist or is empty,
 please check filename and try again!"""
@@ -72,7 +79,10 @@ please check filename and try again!"""
                 print "Line is empty... what gives? Skipping..."
                 continue
             print "Calling {0}".format(number)
-            parsed_number = phone.lookup_number(phone.parse_phone(number), config)
+            pre_lookup = phone.parse_phone(number)
+            print pre_lookup
+            parsed_number = phone.lookup_number(pre_lookup, cfg)
+            print parsed_number
             calls[parsed_number.e164] = Call(parsed_number, cfg)
             calls[parsed_number.e164].dialstatus = Dialstatus(
                 config,

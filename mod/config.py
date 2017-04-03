@@ -13,7 +13,7 @@ def load_main():
     config_file = "main_config.json"
     if path.exists(config_file):
         try:
-            main_config = load(config_file)
+            return load(config_file)
         except OSError as error:
             print "{0} is invalid because of {1}\n".format(config_file, error)
             exit(1)
@@ -22,22 +22,23 @@ def load_main():
             Would you like to create a new one and manually enter parameters?
             (Y/N): """.format(config_file))
 
-    if makenew.strip()[0:1].upper() == 'Y':
-        main_config = build_main(config_file)
-        return main_config
-    else:
-        print "Oh well, I tried..."
-        exit(1)
+        if makenew.strip()[0:1].upper() == 'Y':
+            main_config = build_main(config_file)
+            save(main_config, config_file)
+            return main_config
+        else:
+            print "Oh well, I tried..."
+            exit(1)
 
 
 def load_campaign(**config):
     """Load the specific config for this campaign."""
 
-    if campaign_code not in config:
-        config["campaign_code"] raw_input(
-        'You did not specify a campaign for this run! Please enter a campaign code: ')
+    if "campaign_code" not in config:
+        config["campaign_code"] = raw_input(
+            'You did not specify a campaign for this run! Please enter a campaign code: ')
         if config["campaign_code"] == '':
-            "I can't run this list without a campaign code!"
+            print "I can't run this list without a campaign code!"
             exit(1)
     config_file = "config_{0}.json".format(config["campaign_code"])
     if path.exists(config_file):
@@ -46,11 +47,11 @@ def load_campaign(**config):
         makenew = raw_input("""You are missing the necessary campaign file: {0}.\n
             Would you like to create a new one and manually enter parameters?
             (Y/N): """.format(config_file))
-    if makenew.strip()[0:1].upper() == 'Y':
-        campaign_config = build_campaign(config_file)
-    else:
-        print "Oh well, I tried..."
-        exit(1)
+        if makenew.strip()[0:1].upper() == 'Y':
+            campaign_config = build_campaign(**config)
+        else:
+            print "Oh well, I tried..."
+            exit(1)
     save(campaign_config, config_file)
     return campaign_config
 
@@ -76,6 +77,8 @@ def build_main(config_file):
         'Enter the path to your database: [Enter for Default: database/]') or "database/"
     main_config['db_type'] = raw_input(
         'Enter the type of database you are using: [Enter for Default: sqlite3]') or "sqlite3"
+    main_config['carrier_file'] = raw_input(
+        'Carrier File to use when building carrier table (full path):') or "examples/testcarriers.csv"    
     main_config['ani'] = raw_input('Enter your Default Call ANI: ')
     main_config['twilio_sid'] = raw_input('Enter your Twilio AccountSID for this campaign: ')
     main_config['twilio_token'] = raw_input('Enter your Twilio AuthToken for this campaign: ')
