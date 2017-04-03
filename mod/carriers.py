@@ -89,8 +89,8 @@ class Carriers(mod.dal.DAL):
         cmd = """SELECT accessNumber
                 FROM carriers 
                 WHERE (substr(accessNumber,1,3)=:area_code 
-                AND carrier=:carrier) 
-                OR carrier=:carrier
+                AND carrierName=:carrier) 
+                OR carrierName=:carrier
             """
-        params = {"area_code": area_code, "carrier": carrier}
+        params = {"area_code": area_code, "carrierName": carrier}
         return self.get_first(cmd, **params)

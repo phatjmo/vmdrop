@@ -29,16 +29,12 @@ class DAL(object):
         -- Doctest --
 
         """
-
-        conn = self.get_conn()
-        cur = conn.cursor()
         cmd = "SELECT name FROM sqlite_master WHERE type='table' AND name='{0}';".format(table_name)
-        # If the carriers table already exists, drop and reload
-        if cur.execute(cmd) == 0:
+
+        if self.get_first(cmd) is None:
             return False
         else:
             return True
-        conn.close()
 
     def drop_table(self, table_name):
         """
@@ -57,7 +53,7 @@ class DAL(object):
         conn.close()
         return True
 
-    def get_none(self, cmd, params):
+    def get_none(self, cmd, **params):
         """
         Execute cmd and expect no return rows.
         Used for custom updates, inserts or other commands.
@@ -137,40 +133,40 @@ class DAL(object):
         -- Doctest --
 
         """
-        conn = self.get_conn()
-        cur = conn.cursor()
         set_str = ""
+        where_str = ""
         for key, value in set_dict.items():
             set_str = "{0} {1}={2},".format(set_str, key, self.encapsulate(value))
         set_str = set_str[:-1]
 
         for key, value in where_dict.items():
-                where_str = "{0} {1}={2} AND".format(where_str, key, self.encapsulate(value))
+            where_str = "{0} {1}={2} AND".format(where_str, key, self.encapsulate(value))
         where_str = where_str[:-4]
 
         cmd = "UPDATE {0} SET {1} WHERE {2}".format(table_name, set_str, where_str)
-        cur.execute(cmd)       
-        conn.commit()
-        conn.close()
-        return True
+        return self.get_none(cmd)
 
     def create_table(self, table_name, fields):
         """
         Create table with fields.
 
         --- Doctest --
+
+        >>> test_db = "database/test.db"
+        >>> test = DAL({"db_path": test_db, "db_type": "sqlite3"})
+        >>> test.create_table("test", ["test1", "test2"])
+        True
+        >>> assert test.table_exists('test')
+        >>> import os
+        >>> os.remove(test_db)
         """
 
-        conn = self.get_conn()
-        cur = conn.cursor()
         field_str = "("
         for field in fields:
             field_str = "{0}{1}, ".format(field_str, field)
         field_str = field_str[:-2] + ")"
         cmd = "CREATE TABLE IF NOT EXISTS {0} {1};".format(table_name, field_str)
-        cur.execute(cmd)
-        conn.close()
-        return True
+        return self.get_none(cmd)
 
     def encapsulate(self, var):
         """
