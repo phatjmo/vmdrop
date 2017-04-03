@@ -27,7 +27,7 @@ __author__ = 'Justin Zimmer'
 def arguments():
     """ Primary Campaign Run Script """
     parser = argparse.ArgumentParser()
-    parser.add_argument('campaign_code',
+    parser.add_argument('campaign',
                         help="Shortcode for this call campaign", type=str)
     parser.add_argument('list_file',
                         help="The list file to call.", type=str)
@@ -86,26 +86,30 @@ please check filename and try again!"""
                 phone_number.type)
             calls[phone_number.e164] = Call(phone_number, cfg)
             calls[phone_number.e164].dialstatus = Dialstatus(
-                config,
+                cfg,
                 list_file=list_file,
                 vm_number=phone_number.e164,
-                campaign_code=cfg["campaign_code"],
+                campaign=cfg["campaign"],
                 access_number=calls[phone_number.e164].access_number,
                 vm_file=cfg["vm_file"],
                 dial_status='Spooling...',
                 number_type=phone_number.type)
-    call_count = sum(call.vm_number.type == "mobile" for call in calls)
+    call_count = sum(calls[call].vm_number.type == "mobile" for call in calls)
     sched = Schedule(call_count, cfg)
     for call in calls:
-        if call.vm_number.type != "mobile":
-            call.dialstatus.update(
+        if calls[call].vm_number.type != "mobile":
+            calls[call].dialstatus.update(
                 dial_status="Aborted",
                 error="NOT MOBILE",
                 error_text="This number is not a mobile number.")
             continue
-        call_file = asterisk.file_innards(config, call)
-        spool_file = asterisk.schedule_call(call_file, cfg, call, sched.next_timeslot_epoch())
-        call.dialstatus.update(
+        call_file = asterisk.file_innards(cfg, calls[call])
+        spool_file = asterisk.schedule_call(
+            call_file,
+            cfg,
+            calls[call],
+            sched.next_timeslot_epoch())
+        calls[call].dialstatus.update(
             spool_file=spool_file,
             dial_status="Spooled")
 

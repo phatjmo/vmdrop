@@ -22,8 +22,8 @@ Set: vm_file={3},vm_number={2},campaign={4},dial_id={5}
 """.format(
     config["ani"],
     call.access_number,
-    call.vm_number.national,
-    config["vm_file"], config["campaign_code"],
+    call.vm_number.national_number,
+    config["vm_file"], config["campaign"],
     call.dialstatus.dial_id)
     return call_file
 
@@ -36,11 +36,11 @@ def schedule_call(call_file, config, call, call_epoch):
     """
 
     filename = "{0}_{1}_{2}.call".format(
-        config["campaign_code"],
-        call.vm_number.national,
+        config["campaign"],
+        call.vm_number.national_number,
         call_epoch)
     temp_file = "/tmp/{0}".format(filename)
-    spool_file = spool_path+"/"+filename
+    spool_file = config["ast_spool"]+"/"+filename
     handle = open(temp_file, "w")
     handle.write(call_file)
     handle.close()

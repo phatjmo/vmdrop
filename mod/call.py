@@ -1,7 +1,6 @@
 
 import util
 from mod.carriers import Carriers
-from functools import partial
 
 class Call(object): # pylint: disable=too-few-public-methods
     """
@@ -17,5 +16,5 @@ class Call(object): # pylint: disable=too-few-public-methods
         self.access_number = carriers.get_access_number(
             parsed_number.carrier,
             str(parsed_number.national_number))
-        print "Access Number: {0}".format(self.access_number)
+        #print "Access Number: {0}".format(self.access_number)
 

@@ -65,10 +65,11 @@ class Carriers(mod.dal.DAL):
             # csv.DictReader uses first line in file for column headings by default
             reader = csv.DictReader(csv_file) # comma is default delimiter
             # to_db = [(row['carrierName'], row['accessNumber']) for row in reader]
+            # for row in reader:
+            #     print row
             to_db = [{"carrierName": row['carrierName'],
                       "accessNumber": row['accessNumber']} for row in reader]
         self.insert_rows('carriers', to_db)
-        return True
 
     def get_access_number(self, carrier, number):
         """
@@ -93,4 +94,8 @@ class Carriers(mod.dal.DAL):
                 OR carrierName=:carrier
             """
         params = {"area_code": area_code, "carrier": carrier}
-        return self.get_first(cmd, **params)
+        result = self.get_first(cmd, **params)
+        if result is None:
+            return ''
+        else:
+            return result[0]

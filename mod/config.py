@@ -34,13 +34,13 @@ def load_main():
 def load_campaign(**config):
     """Load the specific config for this campaign."""
 
-    if "campaign_code" not in config:
-        config["campaign_code"] = raw_input(
+    if "campaign" not in config:
+        config["campaign"] = raw_input(
             'You did not specify a campaign for this run! Please enter a campaign code: ')
-        if config["campaign_code"] == '':
+        if config["campaign"] == '':
             print "I can't run this list without a campaign code!"
             exit(1)
-    config_file = "config_{0}.json".format(config["campaign_code"])
+    config_file = "config_{0}.json".format(config["campaign"])
     if path.exists(config_file):
         campaign_config = load(config_file)
     else:
@@ -95,7 +95,7 @@ def build_main(config_file):
 def build_campaign(**config):
     """Build the configuration file for this campaign."""
     campaign_config = {}
-    campaign_config['campaign_code'] = config['campaign_code'] if 'campaign_code' in config else raw_input('Enter your Campaign Name: ')
+    campaign_config['campaign'] = config['campaign'] if 'campaign' in config else raw_input('Enter your Campaign Name: ')
     campaign_config['ani'] = config['ani'] if 'ani' in config else raw_input('Enter your Campaign Call ANI: ')
     campaign_config['cps'] = config['cps'] if 'cps' in config else raw_input('Enter the max Calls Per Second for this campaign: ')
     campaign_config['maxconcurrent'] = config['maxconcurrent'] if 'maxconcurrent' in config else raw_input(

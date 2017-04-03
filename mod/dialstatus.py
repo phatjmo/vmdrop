@@ -28,7 +28,7 @@ class Dialstatus(mod.dal.DAL):
         """
         if not self.table_exists('dialstatus'):
             self.create_table('dialstatus',
-                              ['dial_id integer primary key'
+                              ['dial_id integer primary key',
                                'campaign',
                                'vm_number',
                                'access_number',
@@ -57,17 +57,34 @@ class Dialstatus(mod.dal.DAL):
                         number_type='',
                         error='',
                         error_text='')
-        new_dict.update(self.__dict__)
-        self.insert_rows('dialstatus', new_dict)
-        new_dict["dial_id"] = self.get_first("""SELECT max(dial_id)
-                                         FROM dialstatus
-                                         WHERE vm_number = :vm_number 
-                                         and campaign = :campaign 
-                                         and list_file = :list_file""", self.__dict__)
+        for key in new_dict:
+            if key in self.__dict__:
+                new_dict[key] = self.__dict__[key]
+
+        insert_dict = {}
+        for key in new_dict:
+            #print "{0}: {1}".format(key, new_dict[key])
+            if new_dict[key] == '':
+                continue
+            else:
+                # print "Inserting: {0}: {1}".format(key, new_dict[key])
+                insert_dict[key] = new_dict[key]
+
+        # new_dict.update(self.__dict__) <-- Not good because self has more keys than the table!
+        self.insert_rows('dialstatus', insert_dict)
+        new_dial_id = self.get_first("""SELECT max(dial_id)
+                                                FROM dialstatus
+                                                WHERE vm_number = :vm_number 
+                                                and campaign = :campaign 
+                                                and list_file = :list_file""", **new_dict)
+        if new_dial_id is None:
+            new_dict["dial_id"] = 0
+        else:
+            new_dict["dial_id"] = new_dial_id[0]
         return new_dict
 
 
-    def save(self, **updates):
+    def update(self, **updates):
         """
         Update dialstatus record.
 
@@ -77,9 +94,8 @@ class Dialstatus(mod.dal.DAL):
             self.__dict__.update(self.__new_dialstatus())
         where_dict = {"dial_id": self.dial_id}
         self.update_rows("dialstatus", updates, where_dict)
-        return True
-
-
+        # print self.__dict__
+        self.__dict__.update(self.__get_dialstatus(dial_id=self.dial_id))
 
     def __get_dialstatus(self, **dialstatus):
         """
@@ -92,9 +108,9 @@ class Dialstatus(mod.dal.DAL):
         new_dict = {}
         cmd = """SELECT * FROM dialstatus
                  WHERE dial_id = :dial_id"""
-        result = self.get_first(cmd, dialstatus)
-        for col, value in result.items():
-            new_dict[col] = value
+        result = self.get_first(cmd, **dialstatus)
+        for col in result.keys():
+            new_dict[col] = result[col]
         return new_dict
 
     def get_all_where(self, **params):

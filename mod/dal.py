@@ -51,7 +51,7 @@ class DAL(object):
         cur.execute(cmd)
         conn.commit()
         conn.close()
-        return True
+        # return True
 
     def get_none(self, cmd, **params):
         """
@@ -66,7 +66,7 @@ class DAL(object):
         cur.execute(cmd, params)
         conn.commit()
         conn.close()
-        return True
+        # return True
 
     def get_first(self, cmd, **params):
         """
@@ -109,7 +109,8 @@ class DAL(object):
 
         field_str = "("
         value_str = "("
-        for field in row_dict.keys():
+        row_keys = row_dict[0].keys() if isinstance(row_dict, list) else row_dict.keys()
+        for field in row_keys:
             field_str = field_str + field + ", "
             value_str = value_str + ":" + field + ", "
         field_str = field_str[:-2] + ")"
@@ -124,7 +125,7 @@ class DAL(object):
 
         conn.commit()
         conn.close()
-        return True
+        # return True
 
     def update_rows(self, table_name, set_dict, where_dict):
         """
@@ -144,7 +145,7 @@ class DAL(object):
         where_str = where_str[:-4]
 
         cmd = "UPDATE {0} SET {1} WHERE {2}".format(table_name, set_str, where_str)
-        return self.get_none(cmd)
+        self.get_none(cmd)
 
     def create_table(self, table_name, fields):
         """
@@ -166,7 +167,7 @@ class DAL(object):
             field_str = "{0}{1}, ".format(field_str, field)
         field_str = field_str[:-2] + ")"
         cmd = "CREATE TABLE IF NOT EXISTS {0} {1};".format(table_name, field_str)
-        return self.get_none(cmd)
+        self.get_none(cmd)
 
     def encapsulate(self, var):
         """
@@ -174,6 +175,8 @@ class DAL(object):
         """
         try:
             complex(var) # for int, long, float and complex
+        except TypeError:
+            return "'{0}'".format(var)
         except ValueError:
             return "'{0}'".format(var)
 
