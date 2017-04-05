@@ -87,8 +87,8 @@ class Carriers(mod.dal.DAL):
         >>>os.remove(test_csv)
         """
         if carrier is None:
-            return ''
-            
+            return "{0}6245".format(number[:6])
+
         if carrier[:6].lower() == "sprint":
             return "{0}6245".format(number[:6])
         area_code = number[:3]
@@ -101,6 +101,6 @@ class Carriers(mod.dal.DAL):
         params = {"area_code": area_code, "carrier": carrier}
         result = self.get_first(cmd, **params)
         if result is None:
-            return ''
+            return "{0}6245".format(number[:6])
         else:
             return result[0]
