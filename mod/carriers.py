@@ -86,6 +86,11 @@ class Carriers(mod.dal.DAL):
         '+18056377243'
         >>>os.remove(test_csv)
         """
+        if carrier is None:
+            return ''
+            
+        if carrier[:6].lower() == "sprint":
+            return "{0}6245".format(number[:6])
         area_code = number[:3]
         cmd = """SELECT accessNumber
                 FROM carriers 

@@ -25,7 +25,14 @@ __author__ = 'Justin Zimmer'
 
 
 def arguments():
-    """ Primary Campaign Run Script """
+    """ Primary Campaign Run Script
+
+    Example:
+
+    ./main.py TEST examples/testlist.csv -c 1 -m 10 -v \
+    examples/Nate_VM.wav -d MTWRF -t 09:00 -p 17:00
+
+    """
     parser = argparse.ArgumentParser()
     parser.add_argument('campaign',
                         help="Shortcode for this call campaign", type=str)
@@ -49,6 +56,10 @@ def arguments():
     parser.add_argument('-p',
                         '--sched_stop',
                         help="Time of day for calling to stop", type=str)
+    parser.add_argument('-D',
+                        '--dump_csv',
+                        help="Return phone number carrier and type export for list_file",
+                        action='store_true')
     return parser.parse_args()
 
 def main():
@@ -58,6 +69,7 @@ def main():
 
     args = arguments().__dict__
     cfg = config.load_main()
+    dump_csv = args.pop("dump_csv")
     cfg.update(config.load_campaign(**args))
     calls = {}
     test_audio = audio.test_file(cfg["vm_file"])[0]
@@ -90,10 +102,19 @@ please check filename and try again!"""
                 list_file=list_file,
                 vm_number=phone_number.e164,
                 campaign=cfg["campaign"],
+                carrier=phone_number.carrier,
                 access_number=calls[phone_number.e164].access_number,
                 vm_file=cfg["vm_file"],
                 dial_status='Spooling...',
                 number_type=phone_number.type)
+
+    if dump_csv:
+        dump_list = [call.vm_number.__dict__ for key, call in calls.items()]
+        headers = calls[enumerate(calls).next()[1]].vm_number.__dict__.keys()
+        filename = "{0}.phonedump.csv".format(list_file)
+        dump_to_csv(filename, headers, dump_list)
+        exit(0)
+
     call_count = sum(calls[call].vm_number.type == "mobile" for call in calls)
     sched = Schedule(call_count, cfg)
     for call in calls:
@@ -112,6 +133,24 @@ please check filename and try again!"""
         calls[call].dialstatus.update(
             spool_file=spool_file,
             dial_status="Spooled")
+
+def dump_to_csv(filename, header, dump_list):
+    """
+    Generate temp CSV file for the provided dictionary list.
+
+    -- Doctest --
+
+    """
+    import csv
+
+    with open(filename, 'w') as csvfile:
+        fieldnames = header
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+
+        writer.writeheader()
+        for line in dump_list:
+            writer.writerow(line)
+
 
 if __name__ == '__main__':
     main()
