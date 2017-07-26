@@ -31,7 +31,11 @@ class Phone(object):
         self.e164 = self.format_e164(parsed_phone)
         self.national_number = parsed_phone.national_number
         self.country_code = parsed_phone.country_code
-        self.lookup_number(kwargs["sid"], kwargs["token"])
+        if all (k in kwargs.keys() for k in ("carrier","type")):
+            self.carrier = kwargs["carrier"]
+            self.type = kwargs["type"]
+        else:
+            self.lookup_number(kwargs["sid"], kwargs["token"])
 
     def parse_phone(self, number, region="US"):
         """ Parse phone number into phone object """

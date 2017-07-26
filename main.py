@@ -2,6 +2,7 @@
 # coding=utf-8
 import argparse
 #from sys import argv
+import csv
 from os import path
 from os import stat
 from mod import config
@@ -60,6 +61,10 @@ def arguments():
                         '--dump_csv',
                         help="Return phone number carrier and type export for list_file",
                         action='store_true')
+    parser.add_argument('-P',
+                        '--preprocessed',
+                        help="This file has been pre-processed, skip Twilio queries",
+                        action='store_true')
     return parser.parse_args()
 
 def main():
@@ -70,6 +75,7 @@ def main():
     args = arguments().__dict__
     cfg = config.load_main()
     dump_csv = args.pop("dump_csv")
+    query_twilio = True
     cfg.update(config.load_campaign(**args))
     calls = {}
     test_audio = audio.test_file(cfg["vm_file"])[0]
@@ -79,19 +85,31 @@ def main():
         if override_audio.strip()[0:1].upper() != 'Y':
             exit(1)
 
+    ## Detect if file is dumpfile, check for carrier field, load using csv...
     list_file = args["list_file"]
     if not path.exists(list_file) or stat(list_file).st_size == 0:
         print """Specified file does not exist or is empty,
 please check filename and try again!"""
         exit(1)
-    with open(list_file) as leads:
-        for line in leads:
-            number = line.strip()
+    with open(list_file, 'rb') as leads:
+    ## Switch to CSV iterator
+        reader = csv.DictReader(leads)
+        headers = reader.fieldnames
+        # Dumped number format: national_number,carrier,e164,country_code,type
+        if 'carrier' in headers:
+            print "File had already been processed, setting query_twilio to false"
+            query_twilio = False
+        
+        for row in reader:
+            number = row[0] # always first field or else!
             if not number:
                 print "Line is empty... what gives? Skipping..."
                 continue
             print "Calling {0}".format(number)
-            phone_number = Phone(number, sid=cfg["twilio_sid"], token=cfg["twilio_token"])
+            if query_twilio:
+                phone_number = Phone(number, sid=cfg["twilio_sid"], token=cfg["twilio_token"])
+            else:
+                phone_number = Phone(number, carrier=row["carrier"], type=row["type"])
             print "E.164: {0}, Carrier: {1}, Type: {2}".format(
                 phone_number.e164,
                 phone_number.carrier,
